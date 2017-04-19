@@ -85,6 +85,40 @@
 
         </li>
 
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">qrcode-terminal.</span>main</span>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.qrcode-terminal.main">module qrcode-terminal.main</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.qrcode-terminal.main.generate">
+            function <span class="apidocSignatureSpan">qrcode-terminal.main.</span>generate
+            <span class="apidocSignatureSpan">(input, opts, cb)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.qrcode-terminal.main.setErrorLevel">
+            function <span class="apidocSignatureSpan">qrcode-terminal.main.</span>setErrorLevel
+            <span class="apidocSignatureSpan">(error)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">number <span class="apidocSignatureSpan">qrcode-terminal.main.</span>error</span>
+
+        </li>
+
     </ol></li>
 
 </ol></div>
@@ -192,6 +226,142 @@ If you don&#x27;t want to display to the terminal but just want to string you ca
     <h2>
         <a href="#apidoc.element.qrcode-terminal.setErrorLevel" id="apidoc.element.qrcode-terminal.setErrorLevel">
         function <span class="apidocSignatureSpan">qrcode-terminal.</span>setErrorLevel
+        <span class="apidocSignatureSpan">(error)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">setErrorLevel = function (error) {
+    this.error = QRErrorCorrectLevel[error] || this.error;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+To display some data to the terminal just call:
+
+qrcode.generate(&#x27;This will be a QRCode, eh!&#x27;);
+
+You can even specify the error level (default is &#x27;L&#x27;):
+
+qrcode.<span class="apidocCodeKeywordSpan">setErrorLevel</span>(&#x27;Q&#x27;);
+qrcode.generate(&#x27;This will be a QRCode with error level Q!&#x27;);
+
+If you don&#x27;t want to display to the terminal but just want to string you can provide a callback:
+
+qrcode.generate(&#x27;http://github.com&#x27;, function (qrcode) {
+    console.log(qrcode);
+});
+...</pre></li>
+    </ul>
+
+
+
+
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.qrcode-terminal.main" id="apidoc.module.qrcode-terminal.main">module qrcode-terminal.main</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.qrcode-terminal.main.generate" id="apidoc.element.qrcode-terminal.main.generate">
+        function <span class="apidocSignatureSpan">qrcode-terminal.main.</span>generate
+        <span class="apidocSignatureSpan">(input, opts, cb)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">generate = function (input, opts, cb) {
+    if (typeof opts === &#x27;function&#x27;) {
+        cb = opts;
+        opts = {};
+    }
+
+    var qrcode = new QRCode(-1, this.error);
+    qrcode.addData(input);
+    qrcode.make();
+
+    var output = &#x27;&#x27;;
+    if (opts &#x26;&#x26; opts.small) {
+        var BLACK = true, WHITE = false;
+        var moduleCount = qrcode.getModuleCount();
+        var moduleData = qrcode.modules.slice();
+
+        var oddRow = moduleCount % 2 === 1;
+        if (oddRow) {
+            moduleData.push(fill(moduleCount, WHITE));
+        }
+
+        var platte= {
+            WHITE_ALL: &#x27;\u2588&#x27;,
+            WHITE_BLACK: &#x27;\u2580&#x27;,
+            BLACK_WHITE: &#x27;\u2584&#x27;,
+            BLACK_ALL: &#x27; &#x27;,
+        };
+
+        var borderTop = repeat(platte.BLACK_WHITE).times(moduleCount + 3);
+        var borderBottom = repeat(platte.WHITE_BLACK).times(moduleCount + 3);
+        output += borderTop + &#x27;\n&#x27;;
+
+        for (var row = 0; row &#x3c; moduleCount; row += 2) {
+            output += platte.WHITE_ALL;
+
+            for (var col = 0; col &#x3c; moduleCount; col++) {
+                if (moduleData[row][col] === WHITE &#x26;&#x26; moduleData[row + 1][col] === WHITE) {
+                    output += platte.WHITE_ALL;
+                } else if (moduleData[row][col] === WHITE &#x26;&#x26; moduleData[row + 1][col] === BLACK) {
+                    output += platte.WHITE_BLACK;
+                } else if (moduleData[row][col] === BLACK &#x26;&#x26; moduleData[row + 1][col] === WHITE) {
+                    output += platte.BLACK_WHITE;
+                } else {
+                    output += platte.BLACK_ALL;
+                }
+            }
+
+            output += platte.WHITE_ALL + &#x27;\n&#x27;;
+        }
+
+        if (!oddRow) {
+            output += borderBottom;
+        }
+    } else {
+        var border = repeat(white).times(qrcode.getModuleCount() + 3);
+
+        output += border + &#x27;\n&#x27;;
+        qrcode.modules.forEach(function (row) {
+            output += white;
+            output += row.map(toCell).join(&#x27;&#x27;);
+            output += white + &#x27;\n&#x27;;
+        });
+        output += border;
+    }
+
+    if (cb) cb(output);
+    else console.log(output);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+    var qrcode = require(&#x27;qrcode-terminal&#x27;);
+
+## Usage
+
+To display some data to the terminal just call:
+
+    qrcode.<span class="apidocCodeKeywordSpan">generate</span>(&#x27;This will be a QRCode, eh!&#x27;);
+
+You can even specify the error level (default is &#x27;L&#x27;):
+
+    qrcode.setErrorLevel(&#x27;Q&#x27;);
+    qrcode.generate(&#x27;This will be a QRCode with error level Q!&#x27;);
+
+If you don&#x27;t want to display to the terminal but just want to string you can provide a callback:
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.qrcode-terminal.main.setErrorLevel" id="apidoc.element.qrcode-terminal.main.setErrorLevel">
+        function <span class="apidocSignatureSpan">qrcode-terminal.main.</span>setErrorLevel
         <span class="apidocSignatureSpan">(error)</span>
         </a>
     </h2>
